@@ -3,8 +3,6 @@ WITH selected_condition AS (
         person_id,
         condition_concept_id,
         condition_start_date
-        -- condition_end_date,
-        -- condition_end_reason
     FROM 
         condition_occurrence
     WHERE
