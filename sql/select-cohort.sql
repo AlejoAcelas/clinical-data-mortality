@@ -10,12 +10,9 @@ WITH selected_condition AS (
 )
 SELECT
     sc.person_id,
-    sc.condition_concept_id,
-    sc.condition_start_date,
-    CASE
-        WHEN d.death_date IS NULL THEN 1
-        ELSE 0
-    END AS dead
+    sc.condition_concept_id AS disease_concept_id,
+    sc.condition_start_date AS disease_start_date,
+    d.death_date
 FROM
     selected_condition AS sc
     INNER JOIN 
