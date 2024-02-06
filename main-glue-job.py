@@ -96,32 +96,58 @@ def cast_date_columns(df: DataFrame) -> DataFrame:
 
 # %%
 
+person = create_medical_data_view("person")
 create_medical_data_view("death")
-create_medical_data_view("person")
 create_medical_data_view("condition_occurrence")
 create_medical_data_view("drug_exposure5_2_2")
 create_medical_data_view("observation_period")
 
-create_vocabulary_view("icd10-categories")
-create_vocabulary_view("atc-categories")
+create_vocabulary_view("icd10_categories")
+create_vocabulary_view("atc_categories")
 
 # %%
 
-apply_sql_script("cohort", "select-cohort.sql")
-apply_sql_script("features", "add-features.sql")
-data = apply_sql_script("data", "map-features-to-categories.sql")
+cohort = apply_sql_script("cohort", "select-cohort.sql")
+common_conditions = apply_sql_script("common_conditions", "select-common-conditions.sql")
+common_drugs = apply_sql_script("common_drugs", "select-common-drugs.sql")
+
+data = cohort.join(
+    common_conditions.groupBy("person_id").pivot("condition_category").count(),
+    on="person_id",
+    how="left",
+).join(
+    common_drugs.groupBy("person_id").pivot("drug_category").count(),
+    on="person_id",
+    how="left",
+).join(
+    person.select(["person_id", "gender_concept_id", "year_of_birth", "race_concept_id"]),
+    on="person_id",
+    how="left",
+).fillna(0)
 
 # %%
 
-train_data, test_data = data.randomSplit([0.9, 0.1])
+train_data, test_data = data.randomSplit([0.9, 0.1], seed=42)
 
 # %%
+for name, df in [("train", train_data), ("test", test_data)]:    
+    s3_data_sink = glueContext.getSink(
+        path=f"s3://synth-medical/data/{name}/",
+        connection_type="s3",
+        updateBehavior="UPDATE_IN_DATABASE",
+        partitionKeys=[],
+        enableUpdateCatalog=True,
+    )
+    s3_data_sink.setCatalogInfo(
+        catalogDatabase=PATIENT_DATABASE, catalogTableName=f"{name}_data"
+    )
+    s3_data_sink.setFormat("parquet", compression="None")
+    s3_data_sink.writeDataFrame(df)
 
-(train_data.write.format("parquet").option("compression", "gzip")
- .mode("overwrite").save("s3://synth-medical/data/train/"))
-(test_data.write.format("parquet").option("compression", "gzip")
- .mode("overwrite").save("s3://synth-medical/data/test/"))
 
 # %%
 
 job.commit()
+
+# https://stackoverflow.com/questions/35879372/pyspark-matrix-with-dummy-variables
+# https://spark.apache.org/docs/latest/api/python/reference/pyspark.pandas/api/pyspark.pandas.get_dummies.html
