@@ -16,12 +16,10 @@ FROM
     ON cohort.person_id = person.person_id
 
     LEFT JOIN
-    condition_occurrence AS condition
-    ON cohort.person_id = condition.person_id
-    AND DATEDIFF(cohort.disease_start_date, condition.condition_start_date) BETWEEN 0 AND 360
-
-    LEFT JOIN
-    drug_exposure AS drug
-    ON cohort.person_id = drug.person_id
-    AND DATEDIFF(cohort.disease_start_date, drug.drug_exposure_start_date) BETWEEN 0 AND 360
+    (
+        SELECT
+            person_id,
+            
+    )
+    
 ;
