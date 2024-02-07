@@ -6,7 +6,14 @@ WITH selected_condition AS (
     FROM 
         condition_occurrence
     WHERE
-        condition_concept_id = 320128
+        condition_concept_id IN (
+            SELECT 
+                descendant_concept_id
+            FROM
+                icd10_categories
+            WHERE
+                ancestor_concept_id IN ({cohort_disease_icd10_id})
+        )
 )
 SELECT
     sc.person_id,

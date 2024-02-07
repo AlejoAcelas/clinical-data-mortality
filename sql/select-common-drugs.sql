@@ -26,7 +26,7 @@ FROM
         FROM cohort_drugs
         GROUP BY drug_category
         ORDER BY category_count DESC
-        LIMIT 10
+        LIMIT {num_top_categories}
     ) AS most_common_categories
     ON cohort_drugs.drug_category = most_common_categories.drug_category
 ;

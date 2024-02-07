@@ -26,7 +26,7 @@ FROM
         FROM cohort_conditions
         GROUP BY condition_category
         ORDER BY category_count DESC
-        LIMIT 10
+        LIMIT {num_top_categories}
     ) AS most_common_categories
     ON cohort_conditions.condition_category = most_common_categories.condition_category
 ;
