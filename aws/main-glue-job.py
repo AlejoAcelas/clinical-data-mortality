@@ -113,11 +113,11 @@ create_vocabulary_view("atc_categories")
 
 cohort = apply_sql_script("cohort", "select-cohort.sql", cohort_disease_icd10_id="'I20', 'I21', 'I22', 'I23', 'I24', 'I25'")
 common_conditions = apply_sql_script("common_conditions", "select-common-conditions.sql", num_top_categories=10)
-common_drugs = apply_sql_script("common_drugs", "select-common-drugs.sql", num_top_categories=5)
+common_drugs = apply_sql_script("common_drugs", "select-common-drugs.sql", num_top_categories=10)
 
 data = cohort.select(
-    F.col("person_id"),
     F.when(F.col("death_date").isNotNull(), 1).otherwise(0).alias("target"),
+    F.col("person_id"),
 ).join(
     common_conditions.groupBy("person_id").pivot("condition_category").count(),
     on="person_id",
